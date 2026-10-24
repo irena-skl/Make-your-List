@@ -1,0 +1,11 @@
+# 本地验证产物：E2E 截图等二进制文件（非网站运行所需）
+.verify/shot-*.png
+
+# 临时本地服务副本（正式服务脚本为 .verify/serve.py）
+.verify/serve-temp.py
+
+# 系统与编辑器杂项
+.DS_Store
+Thumbs.db
+desktop.ini
+node_modules/

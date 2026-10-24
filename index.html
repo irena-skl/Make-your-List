@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Make your List">
+<title>Make your List</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="page">
+  <header class="page-header">
+    <button class="mail-btn" id="mail-btn" type="button" data-i18n-attr="title:feedback.mailBtn,aria-label:feedback.mailBtn">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" stroke="currentColor" stroke-width="2"/>
+        <path d="M3.5 6.5l7.6 5.6a1.5 1.5 0 0 0 1.8 0l7.6-5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="logo">&#9654;</div>
+    <h1 data-i18n="app.title">Make your List</h1>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button class="lang-btn" type="button" data-lang-btn="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang-btn="en">English</button>
+      <button class="lang-btn" type="button" data-lang-btn="zh">中文</button>
+    </div>
+  </header>
+
+  <div class="alert" id="err-alert" hidden></div>
+
+  <section class="card">
+    <span class="field-label" data-i18n="index.urlLabel">视频网址（按顺序循环播放，最多 5 个）</span>
+    <div class="url-rows" id="url-rows">
+      <div class="url-row">
+        <input class="url-input" id="url-input-0" type="text" placeholder="视频链接 1" autocomplete="off" spellcheck="false">
+        <button class="row-remove" type="button" title="删除此链接" hidden>&times;</button>
+      </div>
+    </div>
+    <div class="hint-row">
+      <span class="hint" data-i18n="index.formatHint">支持 YouTube 的 watch / youtu.be / shorts / embed 链接格式</span>
+      <button class="btn link" id="sample-btn" type="button" data-i18n="index.sampleBtn">填入示例链接</button>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="add-btn" type="button">+ 添加链接（1 / 5）</button>
+      <button class="btn primary" id="parse-btn" type="button" data-i18n="index.parseBtn">解析</button>
+    </div>
+    <p class="error" id="parse-error" hidden></p>
+
+    <div class="result" id="result" hidden>
+      <div class="cover-wrap">
+        <img id="cover-img" alt="视频封面（第一个链接）">
+        <p class="cover-missing" id="cover-missing" data-i18n="index.coverMissing" hidden></p>
+        <span class="cover-tag" id="cover-tag" data-i18n="index.coverTag">封面 · 第一个链接</span>
+      </div>
+      <div class="result-meta">
+        <p class="meta-row" id="video-count"></p>
+        <ol class="video-list" id="video-list"></ol>
+        <button class="btn primary big" id="goto-btn" type="button" data-i18n="index.gotoBtn">进入播放设置 &rarr;</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    <p class="footer-note" data-i18n="footer.note">本网站仅供娱乐，不得进行违法商业活动。</p>
+    <p class="footer-star" data-i18n="footer.star">如果喜欢的话可以给我的 <a class="gh-link" href="https://github.com/irena-skl/Make-your-List" target="_blank" rel="noopener"><img class="gh-logo" src="assets/github.svg" alt="GitHub"></a> 点个星。</p>
+  </footer>
+
+  <div class="modal-mask" id="feedback-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+      <div class="modal-head">
+        <h2 id="fb-title" data-i18n="feedback.title">遇到的问题</h2>
+        <button class="modal-close" id="fb-close" type="button" data-i18n-attr="aria-label:feedback.close">&times;</button>
+      </div>
+      <textarea id="fb-text" class="fb-text" rows="6" data-i18n-attr="placeholder:feedback.placeholder"></textarea>
+      <p class="fb-status" id="fb-status" hidden></p>
+      <div class="modal-foot">
+        <button class="btn ghost" id="fb-cancel" type="button" data-i18n="feedback.cancel">取消</button>
+        <button class="btn primary" id="fb-submit" type="button" data-i18n="feedback.submit">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="private-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pm-title">
+      <div class="modal-head">
+        <h2 id="pm-title" data-i18n="private.title">暂不支持的链接</h2>
+        <button class="modal-close" id="pm-close" type="button" data-i18n-attr="aria-label:feedback.close">&times;</button>
+      </div>
+      <div class="pm-body" id="pm-body"></div>
+      <p class="pm-note" data-i18n="private.note">本平台暂时不支持播放此类视频，请更换以上链接后重新解析。</p>
+      <div class="modal-foot">
+        <button class="btn primary" id="pm-ok" type="button" data-i18n="private.ok">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="thanks-modal" hidden>
+    <div class="modal modal-thanks" role="dialog" aria-modal="true" aria-labelledby="thanks-title">
+      <div class="modal-head">
+        <h2 id="thanks-title" data-i18n="feedback.thanksTitle">感谢您的反馈！</h2>
+        <button class="modal-close" id="thanks-close" type="button" data-i18n-attr="aria-label:feedback.close">&times;</button>
+      </div>
+      <p class="thanks-body" data-i18n="feedback.thanksBody">我们已经收到你的反馈，会认真查看每一条建议，努力让网站变得更好。</p>
+      <div class="modal-foot">
+        <button class="btn primary" id="thanks-ok" type="button" data-i18n="feedback.thanksClose">关闭</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="assets/i18n.js"></script>
+<script src="assets/parse.js"></script>
+<script>
+  (function () {
+    'use strict';
+
+    var MAX_LINKS = 5;
+    var EXAMPLE_URL = 'https://www.youtube.com/watch?v=br6ntQkeY7k';
+    var urlRows = document.getElementById('url-rows');
+    var addBtn = document.getElementById('add-btn');
+    var parseBtn = document.getElementById('parse-btn');
+    var sampleBtn = document.getElementById('sample-btn');
+    var error = document.getElementById('parse-error');
+    var errAlert = document.getElementById('err-alert');
+    var result = document.getElementById('result');
+    var coverImg = document.getElementById('cover-img');
+    var videoCount = document.getElementById('video-count');
+    var videoList = document.getElementById('video-list');
+    var gotoBtn = document.getElementById('goto-btn');
+    var current = [];
+    var unavailableItems = []; // 被标记为「游客无法观看」的列表项（私享/已失效视频）
+    var unavailableInfos = []; // 同上，记录 {index, id}，用于解析完成后的提醒弹窗
+    var pendingChecks = 0;     // 进行中的 oEmbed 检查数，全部回来后决定是否弹提醒
+
+    var coverTag = document.getElementById('cover-tag');
+    var coverMissing = document.getElementById('cover-missing');
+    var privateModal = document.getElementById('private-modal');
+    var pmBody = document.getElementById('pm-body');
+
+    var err = new URLSearchParams(location.search).get('err');
+    if (err) { errAlert.textContent = err; errAlert.hidden = false; }
+
+    function rowEls() { return Array.prototype.slice.call(urlRows.querySelectorAll('.url-row')); }
+    function rowInputs() { return Array.prototype.slice.call(urlRows.querySelectorAll('.url-input')); }
+
+    /** 刷新行的序号占位符、删除按钮可见性与添加按钮状态 */
+    function refreshRows() {
+      var rows = rowEls();
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].querySelector('.url-input').placeholder = I18n.t('index.linkPlaceholder', { n: i + 1 });
+        rows[i].querySelector('.row-remove').hidden = i === 0; // 第一行不可删除
+      }
+      addBtn.disabled = rows.length >= MAX_LINKS;
+      addBtn.textContent = rows.length >= MAX_LINKS
+        ? I18n.t('index.addBtnMax', { max: MAX_LINKS })
+        : I18n.t('index.addBtn', { n: rows.length, max: MAX_LINKS });
+    }
+
+    /** 新增一行链接输入，返回新输入框 */
+    function addLinkRow() {
+      var rows = rowEls();
+      if (rows.length >= MAX_LINKS) return null;
+      var clone = rows[0].cloneNode(true);
+      var input = clone.querySelector('.url-input');
+      input.value = '';
+      input.id = ''; // 克隆行去掉 id，避免重复
+      clone.querySelector('.row-remove').hidden = false;
+      urlRows.appendChild(clone);
+      refreshRows();
+      return input;
+    }
+
+    addBtn.addEventListener('click', function () {
+      var input = addLinkRow();
+      if (input) input.focus();
+    });
+
+    // 删除按钮（事件委托）
+    urlRows.addEventListener('click', function (e) {
+      var rm = e.target.closest ? e.target.closest('.row-remove') : null;
+      if (!rm) return;
+      var row = rm.closest('.url-row');
+      if (row && rowEls().length > 1) row.remove();
+      refreshRows();
+    });
+
+    // 任意输入框回车 = 解析
+    urlRows.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); doParse(); }
+    });
+
+    parseBtn.addEventListener('click', doParse);
+
+    /**
+     * 填入示例链接（只负责把链接放进输入框，不触发解析）：
+     *  - 存在空框：填入最早出现的空框；
+     *  - 全部填满且未满 5 个：自动新增一个框并填入；
+     *  - 已满 5 个且全部填满：提示没有多余位置。
+     */
+    sampleBtn.addEventListener('click', function () {
+      var inputs = rowInputs();
+      var emptyIdx = -1;
+      for (var i = 0; i < inputs.length; i++) {
+        if (!inputs[i].value.trim()) { emptyIdx = i; break; }
+      }
+      if (emptyIdx >= 0) {
+        inputs[emptyIdx].value = EXAMPLE_URL;
+        inputs[emptyIdx].focus();
+        return;
+      }
+      var newInput = addLinkRow();
+      if (newInput) {
+        newInput.value = EXAMPLE_URL;
+        newInput.focus();
+        return;
+      }
+      alert(I18n.t('index.exampleFull'));
+    });
+
+    function doParse() {
+      error.hidden = true;
+      privateModal.hidden = true; // 重新解析时先收起上一次的提醒弹窗
+      var inputs = rowInputs();
+      var parsed = [];
+      for (var i = 0; i < inputs.length; i++) {
+        var val = inputs[i].value.trim();
+        if (!val) continue;
+        var info = VideoParser.parseVideoUrl(val);
+        if (!info) {
+          result.hidden = true;
+          error.textContent = I18n.t('index.parseErrorBadLink', { n: i + 1, url: val });
+          error.hidden = false;
+          return;
+        }
+        parsed.push(info); // 同一视频允许在列表中多次出现
+      }
+      if (!parsed.length) {
+        result.hidden = true;
+        error.textContent = I18n.t('index.parseErrorEmpty');
+        error.hidden = false;
+        return;
+      }
+      current = parsed;
+      renderResult();
+    }
+
+    function renderResult() {
+      videoCount.textContent = I18n.t('index.videoCount', { n: current.length });
+      unavailableItems = [];
+      unavailableInfos = [];
+      pendingChecks = current.length;
+      refreshGotoBtn();
+      loadCover(current[0]);
+
+      videoList.innerHTML = '';
+      current.forEach(function (info, i) {
+        var li = document.createElement('li');
+
+        var idx = document.createElement('span');
+        idx.className = 'vl-idx';
+        idx.textContent = i + 1;
+
+        var body = document.createElement('div');
+        body.className = 'vl-body';
+
+        var idEl = document.createElement('code');
+        idEl.className = 'vl-id';
+        idEl.textContent = info.id;
+
+        var titleEl = document.createElement('span');
+        titleEl.className = 'vl-title';
+        titleEl.textContent = I18n.t('index.titleLoading');
+
+        body.appendChild(idEl);
+        body.appendChild(titleEl);
+        li.appendChild(idx);
+        li.appendChild(body);
+        videoList.appendChild(li);
+
+        fetchTitle(info, titleEl, i);
+      });
+
+      result.hidden = false;
+    }
+
+    /**
+     * 获取标题；同时识别「游客无法观看」的视频：
+     * YouTube oEmbed 对私享（401）/ 已失效或不存在（400/404）/ 不可访问（403）的
+     * 视频返回错误状态，此时在列表中标记，并在全部链接检查完毕后弹出提醒。
+     */
+    function fetchTitle(info, el, index) {
+      fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(info.watchUrl))
+        .then(function (r) {
+          if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) {
+            markVideoUnavailable(el, info, index);
+            return null;
+          }
+          return r.ok ? r.json() : null;
+        })
+        .then(function (d) {
+          if (d && d.title) { el.textContent = d.title; return; }
+          if (!el.dataset.unavailable) el.textContent = I18n.t('index.titleFailed');
+        })
+        .catch(function () {
+          if (!el.dataset.unavailable) el.textContent = I18n.t('index.titleFailed');
+        })
+        .then(function () {
+          pendingChecks--;
+          if (pendingChecks <= 0) finalizePrivateCheck();
+        });
+    }
+
+    /** 在列表中标记某个视频为「游客无法观看」并给出提醒 */
+    function markVideoUnavailable(el, info, index) {
+      el.dataset.unavailable = '1';
+      el.textContent = I18n.t('index.titleFailed');
+      var li = el.closest ? el.closest('li') : null;
+      if (!li) return;
+      li.classList.add('vl-unavailable');
+      var warn = document.createElement('span');
+      warn.className = 'vl-warn';
+      warn.textContent = I18n.t('index.videoPrivate');
+      el.parentNode.appendChild(warn);
+      unavailableItems.push(li);
+      unavailableInfos.push({ index: index, id: info.id });
+    }
+
+    /** 所有链接的 oEmbed 检查完毕：若有无法观看的视频，弹出提醒并禁止进入播放 */
+    function finalizePrivateCheck() {
+      refreshGotoBtn();
+      if (!unavailableInfos.length) return;
+      pmBody.innerHTML = '';
+      unavailableInfos.forEach(function (item) {
+        var line = document.createElement('span');
+        line.className = 'pm-line';
+        line.textContent = I18n.t('private.line', { n: item.index + 1, id: item.id });
+        pmBody.appendChild(line);
+      });
+      privateModal.hidden = false;
+    }
+
+    /** 存在无法观看的链接时禁用「进入播放设置」，并提示先更换链接 */
+    function refreshGotoBtn() {
+      if (unavailableInfos.length) {
+        gotoBtn.disabled = true;
+        gotoBtn.textContent = I18n.t('private.gotoBlocked');
+      } else {
+        gotoBtn.disabled = false;
+        gotoBtn.innerHTML = I18n.t('index.gotoBtn');
+      }
+    }
+
+    function closePrivateModal() { privateModal.hidden = true; }
+
+    function loadCover(info) {
+      coverImg.hidden = false;
+      coverTag.hidden = false;
+      coverMissing.hidden = true;
+      VideoParser.loadThumbnail(coverImg, info, function () {
+        // 所有缩略图均不可用（私享/已删除/权限受限）：隐藏破图，显示缺失提示
+        coverImg.hidden = true;
+        coverTag.hidden = true;
+        coverMissing.hidden = false;
+      });
+    }
+
+    gotoBtn.addEventListener('click', function () {
+      if (!current.length) return;
+      location.href = 'player.html?ids=' + current.map(function (c) { return c.id; }).join(',');
+    });
+
+    /* ---------- 邮箱反馈：描述弹窗 + 感谢弹窗 ---------- */
+    // FormSubmit 提交地址（使用激活邮件中的令牌替代裸露邮箱地址；
+    // 提交内容仍会发送到站长邮箱 irena.sasai.5@gmail.com）
+    var FEEDBACK_ENDPOINT = 'https://formsubmit.co/ajax/92a6f60b470065468c93519eb6282efd';
+    var mailBtn = document.getElementById('mail-btn');
+    var fbModal = document.getElementById('feedback-modal');
+    var fbText = document.getElementById('fb-text');
+    var fbStatus = document.getElementById('fb-status');
+    var fbSubmit = document.getElementById('fb-submit');
+    var fbCloseBtn = document.getElementById('fb-close');
+    var fbCancel = document.getElementById('fb-cancel');
+    var thanksModal = document.getElementById('thanks-modal');
+    var thanksCloseBtn = document.getElementById('thanks-close');
+    var thanksOk = document.getElementById('thanks-ok');
+    var pmCloseBtn = document.getElementById('pm-close');
+    var pmOk = document.getElementById('pm-ok');
+
+    function openFeedback() {
+      fbStatus.hidden = true;
+      fbStatus.textContent = '';
+      fbModal.hidden = false;
+      setTimeout(function () { fbText.focus(); }, 30);
+    }
+    function closeFeedback() {
+      fbModal.hidden = true;
+    }
+    function openThanks() {
+      thanksModal.hidden = false;
+    }
+    function closeThanks() {
+      thanksModal.hidden = true;
+    }
+    function setFbStatus(html, ok) {
+      fbStatus.innerHTML = html;
+      fbStatus.hidden = false;
+      fbStatus.classList.toggle('ok', !!ok);
+      fbStatus.classList.toggle('err', !ok);
+    }
+
+    mailBtn.addEventListener('click', openFeedback);
+    fbCloseBtn.addEventListener('click', closeFeedback);
+    fbCancel.addEventListener('click', closeFeedback);
+    fbModal.addEventListener('click', function (e) { if (e.target === fbModal) closeFeedback(); });
+    thanksCloseBtn.addEventListener('click', closeThanks);
+    thanksOk.addEventListener('click', closeThanks);
+    thanksModal.addEventListener('click', function (e) { if (e.target === thanksModal) closeThanks(); });
+    pmCloseBtn.addEventListener('click', closePrivateModal);
+    pmOk.addEventListener('click', closePrivateModal);
+    privateModal.addEventListener('click', function (e) { if (e.target === privateModal) closePrivateModal(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (!thanksModal.hidden) closeThanks();
+      else if (!privateModal.hidden) closePrivateModal();
+      else if (!fbModal.hidden) closeFeedback();
+    });
+
+    fbSubmit.addEventListener('click', function () {
+      var text = fbText.value.trim();
+      if (!text) { setFbStatus(I18n.t('feedback.empty'), false); return; }
+      fbSubmit.disabled = true;
+      fbSubmit.textContent = I18n.t('feedback.sending');
+      fbStatus.hidden = true;
+      fetch(FEEDBACK_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          _subject: 'Make your List · 用户反馈 / User feedback',
+          message: text,
+          page: location.href,
+          lang: I18n.lang,
+          time: new Date().toISOString()
+        })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json().catch(function () { return {}; });
+      }).then(function () {
+        fbText.value = '';
+        fbSubmit.textContent = I18n.t('feedback.submit');
+        fbSubmit.disabled = false;
+        // 自动关闭描述弹窗，弹出感谢弹窗
+        closeFeedback();
+        openThanks();
+      }).catch(function () {
+        setFbStatus(I18n.t('feedback.fail'), false);
+        fbSubmit.textContent = I18n.t('feedback.submit');
+        fbSubmit.disabled = false;
+      });
+    });
+
+    // 语言切换：刷新动态生成的占位符、按钮文案与「无法观看」提醒
+    document.addEventListener('langchange', function () {
+      refreshRows();
+      for (var i = 0; i < unavailableItems.length; i++) {
+        var li = unavailableItems[i];
+        var title = li.querySelector('.vl-title');
+        var warn = li.querySelector('.vl-warn');
+        if (title) title.textContent = I18n.t('index.titleFailed');
+        if (warn) warn.textContent = I18n.t('index.videoPrivate');
+      }
+      refreshGotoBtn();
+      // 提醒弹窗打开时切换语言：同步刷新弹窗内的链接清单
+      if (!privateModal.hidden && unavailableInfos.length) {
+        pmBody.innerHTML = '';
+        unavailableInfos.forEach(function (item) {
+          var line = document.createElement('span');
+          line.className = 'pm-line';
+          line.textContent = I18n.t('private.line', { n: item.index + 1, id: item.id });
+          pmBody.appendChild(line);
+        });
+      }
+    });
+
+    refreshRows();
+  })();
+</script>
+</body>
+</html>
